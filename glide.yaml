@@ -1,0 +1,29 @@
+package: github.com/uber-go/tally
+import:
+- package: github.com/cactus/go-statsd-client
+  version: ~3.1.0
+  subpackages:
+  - statsd
+- package: github.com/facebookgo/clock
+- package: github.com/axw/gocov
+  subpackages:
+  - gocov
+- package: github.com/mattn/goveralls
+- package: golang.org/x/tools
+  subpackages:
+  - cover
+- package: github.com/golang/lint
+  subpackages:
+  - golint
+- package: github.com/pborman/uuid
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
+  - require
+- package: github.com/davecgh/go-spew
+  subpackages:
+  - spew
+- package: github.com/pmezard/go-difflib
+  version: ~1.0.0
+  subpackages:
+  - difflib
