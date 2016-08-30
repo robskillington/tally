@@ -64,6 +64,14 @@ type RootScope interface {
 	Close()
 }
 
+// ManualRootScope is a scope must be manually flushed to the reporters, it is useful in tests that don't want to rely on background report loops
+type ManualRootScope interface {
+	RootScope
+
+	// ReportAll
+	ReportAll()
+}
+
 // NoopScope is a scope that does nothing
 var NoopScope = NewRootScope("", nil, NullStatsReporter, 0)
 
@@ -123,6 +131,12 @@ func NewRootScope(prefix string, tags map[string]string, reporter StatsReporter,
 	return scope
 }
 
+// NewManualRootScope creates a new Scope around a given stats reporter with the given prefix
+func NewManualRootScope(prefix string, tags map[string]string, reporter StatsReporter) ManualRootScope {
+	scope := NewRootScope(prefix, tags, reporter, 0).(*standardScope)
+	return scope
+}
+
 // Report dumps all aggregated stats into the reporter. Should be called automatically by the root scope periodically.
 func (s *standardScope) Report(r StatsReporter) {
 	s.cm.RLock()
@@ -140,6 +154,14 @@ func (s *standardScope) Report(r StatsReporter) {
 	// we do nothing for timers here because timers report directly to ths StatsReporter without buffering
 
 	r.Flush()
+}
+
+// ReportAll dumps all stats for all subscopes. Should be called in tests to force a flush.
+func (s *standardScope) ReportAll() {
+	s.registry.sm.Lock()
+	for _, ss := range s.registry.subscopes {
+		ss.Report(s.reporter)
+	}
 }
 
 // reportLoop is used by the root scope for periodic reporting
