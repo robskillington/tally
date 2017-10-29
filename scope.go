@@ -102,6 +102,32 @@ type ScopeOptions struct {
 	Separator       string
 	DefaultBuckets  Buckets
 	SanitizeOptions *SanitizeOptions
+	Vectors         []Vectors
+}
+
+type RedirectOptions struct {
+	To   Scope
+	From []Scope
+}
+
+type RedirectTargetScope interface {
+	Add(scrapableScope ScrapableScope)
+}
+
+type ScrapableScope interface {
+	Pull() ([]Counter, []Gauge)
+}
+
+func Redirect(opts RedirectOptions) error {
+
+
+	target, ok := opts.To.()
+
+	return nil
+}
+
+func NewVectorScope(registries ...Vectors) Scope {
+	return newRootScope(ScopeOptions{Vectors: registries}, 0)
 }
 
 // NewRootScope creates a new root Scope with a set of options and

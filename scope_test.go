@@ -21,7 +21,9 @@
 package tally
 
 import (
+	"fmt"
 	"math"
+	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -29,6 +31,51 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+var globalReg Vectors
+
+func TestNewAPI(t *testing.T) {
+	metric := NewCounterVector(VectorOptions{Help: "RPC calls executed"}, "name", "caller", "callee")
+	v := metric.With("name", "calls").
+		With("caller", "dispatch").
+		With("callee", "api")
+	v.Inc(42)
+	v.Inc(3)
+
+	fmt.Printf("value: %v\n", v.Value())
+
+	globalReg.RegisterCounter(metric)
+
+	// scope from vectors (to be able to use inbuilt tally
+	// scraper and add more vectors after creation)
+	scopeFromVecs := NewVectorScope(globalReg) // vector subpackage
+
+	// existing scope construction
+	existing, closer := NewRootScope(ScopeOptions{ /* options */ }, time.Second)
+	defer closer.Close()
+
+	// redirect scope from vectors into existing scope
+	if err := Redirect(RedirectOptions{
+		To:   existing,
+		From: []Scope{scopeFromVecs},
+	}); err != nil {
+		fmt.Fprintf(os.Stderr, "not able to merge scope from vecs into existing scope")
+		os.Exit(1)
+	}
+}
+
+func BenchmarkNewAPI(b *testing.B) {
+	metric := NewCounterVector(VectorOptions{Help: "RPC calls executed"}, "name", "caller", "callee")
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		v := metric.With("name", "calls").
+			With("caller", "dispatch").
+			With("callee", "api")
+		v.Inc(42)
+		_ = v.Value()
+	}
+}
 
 var (
 	// alphanumericSanitizerOpts is the options to create a sanitizer which uses
